@@ -37,7 +37,7 @@ jobs:
         echo ""
         echo "📋 Ready for deployment!"
         echo "🌐 Frontend: https://crm.gandhibaideaddictioncenter.com" 
-        echo "🔗 Backend: https://gandhii-bai-crm.onrender.com/api"
+        echo "🔗 Backend: https://gandhi-bai.onrender.com/api"
         echo ""
         echo "💡 Next steps:"
         echo "1. Download the 'dist' folder from GitHub Actions artifacts"
