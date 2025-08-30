@@ -37,7 +37,17 @@ dotenv.config();
 const app = express();
 const PORT = process.env.API_PORT || 4000;
 
-app.use(cors());
+// CORS configuration for production
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.ALLOWED_ORIGINS?.split(',') || ['https://crm.gandhibaideaddictioncenter.com']
+    : ['http://localhost:8080', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -60,18 +70,18 @@ app.use(express.static(path.join(__dirname, '../dist')));
 // Fallback to index.html for SPA (must be after API routes)
 // (This will be moved to the end of the file after all routes)
 
-// MySQL connection config (replace with your Hostinger DB credentials)
+// MySQL connection config (now using environment variables)
 const db = await mysql.createPool({
-  host:'srv1639.hstgr.io',
-  user: 'u745362362_crmusername',
-  password: 'Aedentek@123#',
-  database: 'u745362362_crm',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 });
 
-console.log(`Connected to MySQL database at ${process.env.DB_Password}`);
+console.log(`Connected to MySQL database at ${process.env.DB_HOST}`);
 
 
 

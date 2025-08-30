@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { DatabaseService } from '@/services/databaseService';
 import { DoctorAdvanceAPI } from '@/services/doctorAdvanceAPI';
 import { DoctorAdvance } from '@/types/doctorAdvance';
 import MonthYearPickerDialog from '@/components/shared/MonthYearPickerDialog';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import {
   Search,
   Eye,
@@ -229,12 +229,14 @@ const DoctorAdvancePage: React.FC = () => {
   const getDoctorPhotoUrl = (photoPath: string) => {
     if (!photoPath) return '/api/placeholder/40/40';
     
+    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000';
+    
     // Handle both old and new path formats
     if (photoPath.startsWith('Photos/') || photoPath.startsWith('Photos\\')) {
-      return `http://localhost:4000/${photoPath.replace(/\\/g, '/')}`;
+      return `${baseUrl}/${photoPath.replace(/\\/g, '/')}`;
     }
     
-    return `http://localhost:4000/${photoPath}`;
+    return `${baseUrl}/${photoPath}`;
   };
 
   const loadData = async () => {
@@ -282,7 +284,11 @@ const DoctorAdvancePage: React.FC = () => {
       
     } catch (error) {
       console.error('Error loading data:', error);
-      toast.error('Failed to load doctor data');
+      toast({
+        title: "Error",
+        description: "Failed to load doctor data",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -339,7 +345,11 @@ const DoctorAdvancePage: React.FC = () => {
       console.error('Error loading doctor advances:', error);
       setDoctorAdvances([]);
       setFilteredAdvances([]);
-      toast.error('Failed to load doctor advances');
+      toast({
+        title: "Error",
+        description: "Failed to load doctor advances",
+        variant: "destructive",
+      });
     }
   };
 
@@ -375,7 +385,11 @@ const DoctorAdvancePage: React.FC = () => {
     setSubmitting(true);
     try {
       await DoctorAdvanceAPI.delete(advanceToDelete.id);
-      toast.success('Advance record deleted successfully');
+      toast({
+        title: "Success",
+        description: "Advance record deleted successfully",
+        variant: "default",
+      });
       
       // Reload advances for current doctor
       if (selectedDoctor) {
@@ -395,7 +409,11 @@ const DoctorAdvancePage: React.FC = () => {
       setAdvanceToDelete(null);
     } catch (error) {
       console.error('Error deleting advance:', error);
-      toast.error('Failed to delete advance record');
+      toast({
+        title: "Error",
+        description: "Failed to delete advance record",
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -403,7 +421,11 @@ const DoctorAdvancePage: React.FC = () => {
 
   const handleAddAdvance = async () => {
     if (!selectedDoctor || !advanceAmount || !advanceDate) {
-      toast.error('Please fill all required fields');
+      toast({
+        title: "Validation Error",
+        description: "Please fill all required fields",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -420,7 +442,11 @@ const DoctorAdvancePage: React.FC = () => {
 
       console.log('Sending advance data:', advanceData);
       await DoctorAdvanceAPI.create(advanceData);
-      toast.success(`Advance of ₹${advanceAmount} added for Dr. ${selectedDoctor.name}`);
+      toast({
+        title: "Success",
+        description: `Advance of ₹${advanceAmount} added for Dr. ${selectedDoctor.name}`,
+        variant: "default",
+      });
       
       // Reload all advances to update dashboard stats
       try {
@@ -440,7 +466,11 @@ const DoctorAdvancePage: React.FC = () => {
       
     } catch (error) {
       console.error('Error adding advance:', error);
-      toast.error('Failed to add advance');
+      toast({
+        title: "Error",
+        description: "Failed to add advance",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }

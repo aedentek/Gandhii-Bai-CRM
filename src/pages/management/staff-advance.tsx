@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { StaffAdvanceAPI } from '@/services/staffAdvanceAPI';
 import { StaffAdvance } from '@/types/staffAdvance';
 import MonthYearPickerDialog from '@/components/shared/MonthYearPickerDialog';
 import StaffAdvanceModal from '@/components/forms/StaffAdvanceModal';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import {
   Search,
   Eye,
@@ -52,6 +52,14 @@ const StaffAdvancePage: React.FC = () => {
   usePageTitle();
   // Debug: Component is rendering
   console.log('👥 StaffAdvancePage component is rendering...');
+  
+  // Utility function to get staff photo URL
+  const getStaffPhotoUrl = (photoPath: string | null) => {
+    if (!photoPath) return undefined;
+    
+    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000';
+    return `${baseUrl}${photoPath}`;
+  };
   
   // Months array for filtering
   const months = [
@@ -230,7 +238,11 @@ const StaffAdvancePage: React.FC = () => {
       
     } catch (error) {
       console.error('Error loading data:', error);
-      toast.error('Failed to load staff data');
+      toast({
+        title: "Error",
+        description: "Failed to load staff data",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -274,7 +286,11 @@ const StaffAdvancePage: React.FC = () => {
       console.error('Error loading staff advances:', error);
       setStaffAdvances([]);
       setFilteredAdvances([]);
-      toast.error('Failed to load staff advances');
+      toast({
+        title: "Error",
+        description: "Failed to load staff advances",
+        variant: "destructive",
+      });
     }
   };
 
@@ -301,7 +317,11 @@ const StaffAdvancePage: React.FC = () => {
 
   const handleAddAdvance = async () => {
     if (!selectedStaff || !advanceAmount || !advanceDate) {
-      toast.error('Please fill all required fields');
+      toast({
+        title: "Validation Error",
+        description: "Please fill all required fields",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -318,7 +338,11 @@ const StaffAdvancePage: React.FC = () => {
 
       console.log('Sending advance data:', advanceData);
       await StaffAdvanceAPI.create(advanceData);
-      toast.success(`Advance of ₹${advanceAmount} added for ${selectedStaff.name}`);
+      toast({
+        title: "Success",
+        description: `Advance of ₹${advanceAmount} added for ${selectedStaff.name}`,
+        variant: "default",
+      });
       
       // Reload all advances to update dashboard stats
       try {
@@ -339,7 +363,11 @@ const StaffAdvancePage: React.FC = () => {
       
     } catch (error) {
       console.error('Error adding advance:', error);
-      toast.error('Failed to add advance');
+      toast({
+        title: "Error",
+        description: "Failed to add advance",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -362,7 +390,11 @@ const StaffAdvancePage: React.FC = () => {
 
     try {
       await StaffAdvanceAPI.delete(advanceToDelete.id);
-      toast.success('Advance record deleted successfully');
+      toast({
+        title: "Success",
+        description: "Advance record deleted successfully",
+        variant: "default",
+      });
       
       // Close dialog and reset state
       setShowDeleteDialog(false);
@@ -384,7 +416,11 @@ const StaffAdvancePage: React.FC = () => {
       
     } catch (error) {
       console.error('Error deleting advance:', error);
-      toast.error('Failed to delete advance record');
+      toast({
+        title: "Error",
+        description: "Failed to delete advance record",
+        variant: "destructive",
+      });
     }
   };
 
@@ -629,7 +665,7 @@ const StaffAdvancePage: React.FC = () => {
                             <div className="flex justify-center">
                               <Avatar className="h-10 w-10">
                                 <AvatarImage 
-                                  src={staffMember.photo ? `http://localhost:4000${staffMember.photo}` : undefined} 
+                                  src={getStaffPhotoUrl(staffMember.photo)} 
                                 />
                                 <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
                                   {staffMember.name.split(' ').map(n => n[0]).join('')}
@@ -693,7 +729,7 @@ const StaffAdvancePage: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
                       <AvatarImage 
-                        src={selectedStaff.photo ? `http://localhost:4000${selectedStaff.photo}` : undefined} 
+                        src={getStaffPhotoUrl(selectedStaff.photo)} 
                       />
                       <AvatarFallback className="bg-blue-100 text-blue-600">
                         {selectedStaff.name.split(' ').map(n => n[0]).join('')}
@@ -804,7 +840,7 @@ const StaffAdvancePage: React.FC = () => {
                     <div className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full object-cover border-2 sm:border-4 border-white shadow-lg overflow-hidden bg-gradient-to-r from-blue-500 to-purple-600">
                       {selectedStaff.photo ? (
                         <img
-                          src={`http://localhost:4000${selectedStaff.photo}`}
+                          src={getStaffPhotoUrl(selectedStaff.photo)}
                           alt={selectedStaff.name || 'Profile'}
                           className="w-full h-full object-cover"
                           onError={(e) => {
