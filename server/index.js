@@ -64,8 +64,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve static files from Photos directory (new staff photos location)
 app.use('/Photos', express.static(path.join(__dirname, 'Photos')));
 
-// API Health Check Route
-app.get('/', (req, res) => {
+// Serve static frontend files from dist folder
+const frontendPath = path.join(__dirname, '..', 'dist');
+console.log(`📁 Serving frontend from: ${frontendPath}`);
+app.use(express.static(frontendPath));
+
+// API Health Check Route (only for /api/health)
+app.get('/api/health', (req, res) => {
   res.json({ 
     message: '🏥 Gandhi Bai CRM API Server', 
     status: 'running',
@@ -135,11 +140,44 @@ console.log('💰 Doctor Salary middleware registered at /api');
 console.log('💼 Staff Salary middleware registered at /api');
 console.log('🏥 Patient Payments middleware registered at /api');
 
+// Utility function to handle table creation gracefully
+const createTableIfNotExists = async (tableName, createQuery, description) => {
+  try {
+    // First check if table exists
+    const [tables] = await db.execute(`SHOW TABLES LIKE '${tableName}'`);
+    
+    if (tables.length > 0) {
+      console.log(`✅ ${description} table already exists`);
+      return;
+    }
+    
+    // Table doesn't exist, try to create it
+    await db.execute(createQuery);
+    console.log(`✅ ${description} table created successfully`);
+    
+  } catch (err) {
+    if (err.message.includes('Access denied')) {
+      console.log(`ℹ️ ${description} table: CREATE permission not available (expected in production)`);
+      
+      // Check if table exists anyway (might have been created by admin)
+      try {
+        const [tables] = await db.execute(`SHOW TABLES LIKE '${tableName}'`);
+        if (tables.length > 0) {
+          console.log(`✅ ${description} table exists (created by admin)`);
+        } else {
+          console.log(`⚠️ ${description} table missing and cannot be created - please contact database admin`);
+        }
+      } catch (checkErr) {
+        console.log(`⚠️ Cannot verify ${description} table existence:`, checkErr.message);
+      }
+    } else {
+      console.log(`⚠️ ${description} table setup error:`, err.message);
+    }
+  }
+};
 
-
-
-
-db.execute(`
+// Create staff attendance table
+await createTableIfNotExists('staff_attendance', `
   CREATE TABLE IF NOT EXISTS staff_attendance (
     id INT AUTO_INCREMENT PRIMARY KEY,
     staff_id VARCHAR(20) NOT NULL,
@@ -160,14 +198,10 @@ db.execute(`
     
     UNIQUE KEY unique_staff_date (staff_id, date)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-`).then(() => {
-  console.log('✅ Staff attendance table ready');
-}).catch(err => {
-  console.log('⚠️ Staff attendance table setup:', err.message);
-});
+`, 'Staff attendance');
 
 // Create patient monthly records table for carry forward functionality
-db.execute(`
+await createTableIfNotExists('patient_monthly_records', `
   CREATE TABLE IF NOT EXISTS patient_monthly_records (
     id INT AUTO_INCREMENT PRIMARY KEY,
     patient_id VARCHAR(20) NOT NULL,
@@ -192,14 +226,10 @@ db.execute(`
     
     UNIQUE KEY unique_patient_month_year (patient_id, month, year)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-`).then(() => {
-  console.log('✅ Patient monthly records table ready');
-}).catch(err => {
-  console.log('⚠️ Patient monthly records table setup:', err.message);
-});
+`, 'Patient monthly records');
 
 // Create patient payment history table
-db.execute(`
+await createTableIfNotExists('patient_payment_history', `
   CREATE TABLE IF NOT EXISTS patient_payment_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
     patient_id VARCHAR(20) NOT NULL,
@@ -216,15 +246,24 @@ db.execute(`
     INDEX idx_patient_payment_date (patient_id, payment_date),
     INDEX idx_type (type)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-`).then(() => {
-  console.log('✅ Patient payment history table ready');
-}).catch(err => {
-  console.log('⚠️ Patient payment history table setup:', err.message);
+`, 'Patient payment history');
+
+// Catch-all handler: send back React's index.html file for any non-API routes
+app.get('*', (req, res) => {
+  // Don't serve React app for API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+  console.log(`📄 Serving React app from: ${indexPath} for route: ${req.path}`);
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('❌ Error serving React app:', err);
+      res.status(500).send('Error loading application');
+    }
+  });
 });
-
-
-
-
 
 // Bind server to all interfaces so external checks can detect the service
 app.listen(PORT, '0.0.0.0', () => {

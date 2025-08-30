@@ -1,34 +1,94 @@
 import express from 'express';
-import db from '../db/config.js';
+import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const router = express.Router();
 
-// Create test_reports table if it doesn't exist
-const createTableQuery = `
-  CREATE TABLE IF NOT EXISTS test_reports (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    patient_id VARCHAR(20) NOT NULL,
-    patient_name VARCHAR(255) NOT NULL,
-    test_type VARCHAR(100) NOT NULL,
-    test_date DATE NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    notes TEXT,
-    status ENUM('Pending', 'Completed', 'Cancelled') DEFAULT 'Pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    INDEX idx_patient_id (patient_id),
-    INDEX idx_test_date (test_date),
-    INDEX idx_status (status)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-`;
+// Use the same database connection pattern as main server
+const createDbConnection = async () => {
+  try {
+    return await mysql.createPool({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
+    });
+  } catch (error) {
+    console.error('❌ Database connection failed in test-reports:', error.message);
+    return null;
+  }
+};
 
-// Initialize table
-db.execute(createTableQuery).then(() => {
-  console.log('🧪 Test reports table ready');
-}).catch(err => {
-  console.log('⚠️ Test reports table setup:', err.message);
-});
+const db = await createDbConnection();
+
+// Create test_reports table if it doesn't exist (only if db connection is available)
+if (db) {
+  // Utility function to handle table creation gracefully
+  const createTableIfNotExists = async (tableName, createQuery, description) => {
+    try {
+      // First check if table exists
+      const [tables] = await db.execute(`SHOW TABLES LIKE '${tableName}'`);
+      
+      if (tables.length > 0) {
+        console.log(`✅ ${description} table already exists`);
+        return;
+      }
+      
+      // Table doesn't exist, try to create it
+      await db.execute(createQuery);
+      console.log(`✅ ${description} table created successfully`);
+      
+    } catch (err) {
+      if (err.message.includes('Access denied')) {
+        console.log(`ℹ️ ${description} table: CREATE permission not available (expected in production)`);
+        
+        // Check if table exists anyway (might have been created by admin)
+        try {
+          const [tables] = await db.execute(`SHOW TABLES LIKE '${tableName}'`);
+          if (tables.length > 0) {
+            console.log(`✅ ${description} table exists (created by admin)`);
+          } else {
+            console.log(`⚠️ ${description} table missing and cannot be created - please contact database admin`);
+          }
+        } catch (checkErr) {
+          console.log(`⚠️ Cannot verify ${description} table existence:`, checkErr.message);
+        }
+      } else {
+        console.log(`⚠️ ${description} table setup error:`, err.message);
+      }
+    }
+  };
+
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS test_reports (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      patient_id VARCHAR(20) NOT NULL,
+      patient_name VARCHAR(255) NOT NULL,
+      test_type VARCHAR(100) NOT NULL,
+      test_date DATE NOT NULL,
+      amount DECIMAL(10,2) NOT NULL,
+      notes TEXT,
+      status ENUM('Pending', 'Completed', 'Cancelled') DEFAULT 'Pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      
+      INDEX idx_patient_id (patient_id),
+      INDEX idx_test_date (test_date),
+      INDEX idx_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `;
+
+  // Initialize table gracefully
+  await createTableIfNotExists('test_reports', createTableQuery, 'Test reports');
+} else {
+  console.log('⚠️ Test reports: Database connection not available, skipping table creation');
+}
 
 // GET all test reports
 router.get('/test-reports', async (req, res) => {

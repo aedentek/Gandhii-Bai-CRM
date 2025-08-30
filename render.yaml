@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: gandhii-bai-crm-backend
+    name: gandhii-bai-crm-full-stack
     runtime: node
     plan: free
-    buildCommand: cd server && npm install
+    buildCommand: npm install && npm run build:prod && cd server && npm install
     startCommand: cd server && node index.js
     envVars:
       - key: NODE_ENV
@@ -17,6 +17,8 @@ services:
       - key: DB_NAME
         value: u745362362_crm
       - key: API_PORT
+        value: 4000
+      - key: PORT
         value: 4000
       - key: ALLOWED_ORIGINS
         value: https://crm.gandhibaideaddictioncenter.com,https://gandhibaideaddictioncenter.com
