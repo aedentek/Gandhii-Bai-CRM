@@ -1,13 +1,14 @@
 const mysql = require('mysql2/promise');
 const fs = require('fs').promises;
 const path = require('path');
+require('dotenv').config();
 
 // Database configuration
 const dbConfig = {
-  host: 'srv1639.hstgr.io',
-  user: 'u745362362_crmusername',
-  password: 'Aedentek@123#',
-  database: 'u745362362_crm',
+  host: process.env.DB_HOST || 'srv1639.hstgr.io',
+  user: process.env.DB_USER || 'u745362362_crmusername',
+  password: process.env.DB_PASSWORD || 'Aedentek@123#',
+  database: process.env.DB_NAME || 'u745362362_crm',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0

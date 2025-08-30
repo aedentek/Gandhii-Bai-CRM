@@ -2,6 +2,9 @@ import mysql from 'mysql2/promise';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,9 +14,9 @@ async function setupStaffTable() {
   try {
     // Create connection without database
     connection = await mysql.createConnection({
-      host: '127.0.0.1',
-      user: 'root',
-      password: ''
+      host: process.env.DB_HOST || '127.0.0.1',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || ''
     });
 
     // Create database if it doesn't exist
