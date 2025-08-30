@@ -1,12 +1,15 @@
 import mysql from 'mysql2/promise';
 import fs from 'fs';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 async function setupMedicineCategoriesTable() {
   const db = await mysql.createPool({
-    host: 'srv1639.hstgr.io',
-    user: 'u745362362_crmusername',
-    password: 'Aedentek@123#',
-    database: 'u745362362_crm',
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
