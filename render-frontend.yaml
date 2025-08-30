@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: gandhii-bai-crm-frontend
+    env: static
+    buildCommand: npm run build
+    staticPublishPath: ./dist
+    domains:
+      - crm.gandhibaideaddictioncenter.com
+    envVars:
+      - key: VITE_API_URL
+        value: https://gandhii-bai-crm.onrender.com/api
+      - key: VITE_BASE_URL
+        value: https://crm.gandhibaideaddictioncenter.com
+      - key: NODE_ENV
+        value: production
