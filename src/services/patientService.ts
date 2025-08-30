@@ -14,7 +14,8 @@ export class PatientService {
         if (patient.photo) {
           // For static files served by Express, prepend the base URL + the path
           // Server serves static files from /Photos route
-          photoUrl = `http://localhost:4000/${patient.photo}`;
+          const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000';
+          photoUrl = `${baseUrl}/${patient.photo}`;
         }
         
         return {
@@ -47,11 +48,12 @@ export class PatientService {
     try {
       const patient = await DatabaseService.getPatient(id);
       
+      const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000';
       return {
         ...patient,
         photo: patient.photo || null,
         hasPhoto: !!patient.photo,
-        photoUrl: patient.photo ? `http://localhost:4000/${patient.photo}` : null,
+        photoUrl: patient.photo ? `${baseUrl}/${patient.photo}` : null,
       };
     } catch (error) {
       console.error('Error fetching patient with media:', error);

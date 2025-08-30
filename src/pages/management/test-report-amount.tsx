@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import { patientsAPI } from '@/utils/api';
 import MonthYearPickerDialog from '@/components/shared/MonthYearPickerDialog';
 import { getPatientPhotoUrl } from '@/utils/photoUtils';
 import usePageTitle from '@/hooks/usePageTitle';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import '@/styles/global-crm-design.css';
 import {
   Search,
@@ -153,8 +153,10 @@ const TestReportAmountPage: React.FC = () => {
       if (!data || !Array.isArray(data)) {
         console.warn('⚠️ Invalid patient data received:', data);
         setPatients([]);
-        toast('Warning', {
+        toast({
+          title: 'Warning',
           description: 'No patient data received from server',
+          variant: "destructive",
         });
         return;
       }
@@ -189,8 +191,10 @@ const TestReportAmountPage: React.FC = () => {
       console.error('❌ Error loading patients:', error);
       console.error('❌ Error details:', error.message);
       setPatients([]);
-      toast('Error', {
+      toast({
+        title: 'Error',
         description: `Failed to load patients: ${error.message}`,
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -288,8 +292,10 @@ const TestReportAmountPage: React.FC = () => {
 
   const handleAddReport = async () => {
     if (!selectedPatient || !testType || !amount || !testDate) {
-      toast('Validation Error', {
+      toast({
+        title: 'Validation Error',
         description: 'Please fill in all required fields',
+        variant: "destructive",
       });
       return;
     }
@@ -317,8 +323,10 @@ const TestReportAmountPage: React.FC = () => {
       console.log('📥 API Response:', result);
       
       if (result.success) {
-        toast('Success!', {
+        toast({
+          title: 'Success!',
           description: 'Test report added successfully',
+          variant: "default",
         });
         
         handleCloseReportModal();
@@ -328,8 +336,10 @@ const TestReportAmountPage: React.FC = () => {
       }
     } catch (error) {
       console.error('❌ Error adding test report:', error);
-      toast('Error', {
+      toast({
+        title: 'Error',
         description: `Failed to add test report: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -358,8 +368,10 @@ const TestReportAmountPage: React.FC = () => {
         setShowDeleteConfirm(false);
         setDeleteReport(null);
         
-        toast('Success!', {
+        toast({
+          title: 'Success!',
           description: 'Test report deleted successfully',
+          variant: "default",
         });
         
         console.log('✅ Test report deleted successfully');
@@ -368,8 +380,10 @@ const TestReportAmountPage: React.FC = () => {
       }
     } catch (error) {
       console.error('❌ Error deleting test report:', error);
-      toast('Error', {
+      toast({
+        title: 'Error',
         description: `Failed to delete test report: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -494,7 +508,8 @@ const TestReportAmountPage: React.FC = () => {
                   try {
                     // Test GET
                     console.log('📡 Testing GET /api/test-reports...');
-                    const getResponse = await fetch('http://localhost:4000/api/test-reports');
+                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+                    const getResponse = await fetch(`${apiUrl}/test-reports`);
                     console.log('📡 GET API response status:', getResponse.status);
                     const getData = await getResponse.json();
                     console.log('📡 GET API response data:', getData);
@@ -512,7 +527,7 @@ const TestReportAmountPage: React.FC = () => {
                     };
                     console.log('� Sending test data:', testData);
                     
-                    const createResponse = await fetch('http://localhost:4000/api/test-reports', {
+                    const createResponse = await fetch(`${apiUrl}/test-reports`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -524,15 +539,19 @@ const TestReportAmountPage: React.FC = () => {
                     console.log('📡 CREATE API response data:', createData);
                     
                     if (createData.success) {
-                      toast('API Test Success!', {
+                      toast({
+                        title: 'API Test Success!',
                         description: 'Test report created successfully via direct API',
+                        variant: "default",
                       });
                       loadTestReports(); // Refresh the data
                     }
                   } catch (error) {
                     console.error('📡 Direct API error:', error);
-                    toast('API Test Error', {
+                    toast({
+                      title: 'API Test Error',
                       description: `API test failed: ${error.message}`,
+                      variant: "destructive",
                     });
                   }
                 }}

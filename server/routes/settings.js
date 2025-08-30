@@ -180,20 +180,280 @@ router.put('/settings/:key', async (req, res) => {
 
 router.post('/settings', async (req, res) => {
   try {
-    const { key, value } = req.body;
+    const { key, value, setting_type = 'text', description = '' } = req.body;
+    
+    if (!key) {
+      return res.status(400).json({ error: 'Setting key is required' });
+    }
+    
     const [result] = await db.execute(
-      'INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)',
-      [key, value]
+      `INSERT INTO app_settings (setting_key, setting_value, setting_type, description) 
+       VALUES (?, ?, ?, ?) 
+       ON DUPLICATE KEY UPDATE 
+       setting_value = VALUES(setting_value), 
+       setting_type = VALUES(setting_type), 
+       description = VALUES(description),
+       updated_at = CURRENT_TIMESTAMP`,
+      [key, value || '', setting_type, description]
     );
-    res.json({ key, value, message: 'Setting created/updated successfully' });
+    
+    res.json({ 
+      key, 
+      value: value || '', 
+      setting_type, 
+      description, 
+      message: 'Setting created/updated successfully' 
+    });
   } catch (err) {
     console.error('Error creating setting:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
+// Delete setting
+router.delete('/settings/:key', async (req, res) => {
+  try {
+    const settingKey = req.params.key;
+    
+    // Check if setting exists
+    const [existingRows] = await db.execute(
+      'SELECT * FROM app_settings WHERE setting_key = ?', 
+      [settingKey]
+    );
+    
+    if (existingRows.length === 0) {
+      return res.status(404).json({ error: 'Setting not found' });
+    }
+    
+    // Delete the setting
+    const [result] = await db.execute(
+      'DELETE FROM app_settings WHERE setting_key = ?', 
+      [settingKey]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ 
+        message: 'Setting deleted successfully', 
+        key: settingKey,
+        deleted: true
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to delete setting' });
+    }
+  } catch (err) {
+    console.error('Error deleting setting:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Bulk operations for settings
+router.post('/settings/bulk-update', async (req, res) => {
+  try {
+    const { settings } = req.body;
+    
+    if (!Array.isArray(settings) || settings.length === 0) {
+      return res.status(400).json({ error: 'Settings array is required' });
+    }
+    
+    const results = [];
+    
+    for (const setting of settings) {
+      const { key, value, setting_type = 'text', description = '' } = setting;
+      
+      if (!key) {
+        results.push({ key: 'unknown', error: 'Setting key is required' });
+        continue;
+      }
+      
+      try {
+        const [result] = await db.execute(
+          `INSERT INTO app_settings (setting_key, setting_value, setting_type, description) 
+           VALUES (?, ?, ?, ?) 
+           ON DUPLICATE KEY UPDATE 
+           setting_value = VALUES(setting_value), 
+           setting_type = VALUES(setting_type), 
+           description = VALUES(description),
+           updated_at = CURRENT_TIMESTAMP`,
+          [key, value || '', setting_type, description]
+        );
+        
+        results.push({ key, success: true, message: 'Updated successfully' });
+      } catch (error) {
+        results.push({ key, error: error.message });
+      }
+    }
+    
+    res.json({ 
+      message: 'Bulk update completed', 
+      results,
+      total: settings.length,
+      successful: results.filter(r => r.success).length,
+      failed: results.filter(r => r.error).length
+    });
+  } catch (err) {
+    console.error('Error in bulk update:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(__dirname, '..', 'uploads', 'settings');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const timestamp = Date.now();
+    const originalName = file.originalname;
+    const extension = path.extname(originalName);
+    const baseName = path.basename(originalName, extension);
+    
+    // Create a clean filename for settings
+    const cleanBaseName = baseName.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `${cleanBaseName}_${timestamp}${extension}`;
+    
+    cb(null, filename);
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    // Allow images and some other common file types
+    const allowedMimes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/svg+xml',
+      'application/pdf',
+      'text/plain',
+      'application/json',
+      'text/css',
+      'application/javascript'
+    ];
+    
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only images, PDFs, and text files are allowed.'));
+    }
+  }
+});
+
+// Settings file upload endpoint
+router.post('/settings/upload-file', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const { setting_key, description = '' } = req.body;
+    
+    if (!setting_key) {
+      // Clean up uploaded file if setting_key is missing
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: 'Setting key is required' });
+    }
+
+    const fileUrl = `/uploads/settings/${req.file.filename}`;
+    
+    // Save the setting to database
+    const [result] = await db.execute(
+      `INSERT INTO app_settings (setting_key, setting_value, setting_type, description, file_path) 
+       VALUES (?, ?, 'file', ?, ?) 
+       ON DUPLICATE KEY UPDATE 
+       setting_value = VALUES(setting_value), 
+       setting_type = 'file', 
+       description = VALUES(description),
+       file_path = VALUES(file_path),
+       updated_at = CURRENT_TIMESTAMP`,
+      [setting_key, req.file.originalname, description, req.file.path]
+    );
+
+    res.json({
+      message: 'File uploaded and setting saved successfully',
+      setting_key,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      filePath: req.file.path,
+      fileUrl: fileUrl,
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype
+    });
+    
+  } catch (err) {
+    console.error('Error uploading settings file:', err);
+    // Clean up uploaded file on error
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get settings file (serve files)
+router.get('/settings/files/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, '..', 'uploads', 'settings', filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    res.sendFile(filePath);
+  } catch (err) {
+    console.error('Error serving settings file:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete settings file
+router.delete('/settings/files/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, '..', 'uploads', 'settings', filename);
+    
+    // Find and update the setting that references this file
+    const [settingRows] = await db.execute(
+      'SELECT * FROM app_settings WHERE file_path LIKE ?',
+      [`%${filename}%`]
+    );
+    
+    if (settingRows.length > 0) {
+      // Clear the file reference from the setting
+      await db.execute(
+        'UPDATE app_settings SET setting_value = "", file_path = NULL WHERE file_path LIKE ?',
+        [`%${filename}%`]
+      );
+    }
+    
+    // Delete the physical file
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      res.json({ 
+        message: 'File deleted successfully',
+        filename,
+        settingsUpdated: settingRows.length
+      });
+    } else {
+      res.status(404).json({ error: 'File not found' });
+    }
+  } catch (err) {
+    console.error('Error deleting settings file:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Original multer setup for backward compatibility
+const legacyStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadPath = path.join(__dirname, 'uploads', 'patients');
     if (!fs.existsSync(uploadPath)) {
@@ -206,9 +466,9 @@ const storage = multer.diskStorage({
     cb(null, 'new_file_' + uniqueSuffix + path.extname(file.originalname));
   }
 });
-const upload = multer({ storage: storage });
+const legacyUpload = multer({ storage: legacyStorage });
 
-router.post('/upload-settings-file', upload.single('file'), (req, res) => {
+router.post('/upload-settings-file', legacyUpload.single('file'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -225,7 +485,7 @@ router.post('/upload-settings-file', upload.single('file'), (req, res) => {
   }
 });
 
-router.post('/upload-medical-history-file', upload.single('file'), (req, res) => {
+router.post('/upload-medical-history-file', legacyUpload.single('file'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });

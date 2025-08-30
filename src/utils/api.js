@@ -11,11 +11,11 @@
 // Main backend server configuration
 export const API_CONFIG = {
   // Backend server (where your Hostinger database is connected)
-  BACKEND_URL: import.meta.env.VITE_API_URL.replace(/\/api$/, ''),
-  BACKEND_API: import.meta.env.VITE_API_URL,
+  BACKEND_URL: import.meta.env.VITE_API_URL.replace(/\/api$/, '') || 'http://localhost:4000',
+  BACKEND_API: import.meta.env.VITE_API_URL || 'http://localhost:4000/api',
   
   // Frontend development server
-  FRONTEND_URL: 'http://localhost:8080',
+  FRONTEND_URL: import.meta.env.VITE_BASE_URL || 'http://localhost:8080',
   
   // Request timeout
   TIMEOUT: 10000,
@@ -82,21 +82,77 @@ export const settingsAPI = {
   get: (key) => apiCall(`settings/${key}`),
   
   // Update specific setting
-  update: (key, value) => apiCall(`settings/${key}`, {
+  update: (key, value, setting_type = 'text', description = '') => apiCall(`settings/${key}`, {
     method: 'PUT',
-    body: JSON.stringify({ setting_value: value })
+    body: JSON.stringify({ 
+      value, 
+      setting_type, 
+      description 
+    })
   }),
   
   // Create new setting
-  create: (key, value, type = 'text', description = '') => apiCall('settings', {
+  create: (key, value, setting_type = 'text', description = '') => apiCall('settings', {
     method: 'POST',
     body: JSON.stringify({
-      setting_key: key,
-      setting_value: value,
-      setting_type: type,
-      description: description
+      key,
+      value,
+      setting_type,
+      description
     })
-  })
+  }),
+  
+  // Delete setting
+  delete: (key) => apiCall(`settings/${key}`, {
+    method: 'DELETE'
+  }),
+  
+  // Upload file for setting
+  uploadFile: (file, settingKey, description = '') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('setting_key', settingKey);
+    formData.append('description', description);
+    
+    return fetch(`${API_CONFIG.BACKEND_URL}/api/upload-settings-file`, {
+      method: 'POST',
+      body: formData
+      // Don't set Content-Type header, let browser set it with boundary for multipart/form-data
+    }).then(response => response.json());
+  },
+  
+  // Get file URL for setting
+  getFileUrl: (filename) => `${API_CONFIG.BACKEND_URL}/api/settings/files/${filename}`,
+  
+  // Delete settings file
+  deleteFile: (filename) => apiCall(`settings/files/${filename}`, {
+    method: 'DELETE'
+  }),
+  
+  // Bulk update settings
+  bulkUpdate: (settings) => apiCall('settings/bulk-update', {
+    method: 'POST',
+    body: JSON.stringify({ settings })
+  }),
+  
+  // Export settings (gets all and formats for export)
+  export: async () => {
+    const settings = await apiCall('settings');
+    return {
+      exportDate: new Date().toISOString(),
+      settingsCount: settings.length,
+      settings: settings
+    };
+  },
+  
+  // Import settings (bulk create/update)
+  import: (settingsData) => {
+    const settings = Array.isArray(settingsData) ? settingsData : settingsData.settings;
+    return apiCall('settings/bulk-update', {
+      method: 'POST',
+      body: JSON.stringify({ settings })
+    });
+  }
 };
 
 // ===================================

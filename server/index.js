@@ -37,7 +37,17 @@ dotenv.config();
 const app = express();
 const PORT = process.env.API_PORT || 4000;
 
-app.use(cors());
+// CORS configuration for production
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.ALLOWED_ORIGINS?.split(',') || ['https://crm.gandhibaideaddictioncenter.com']
+    : ['http://localhost:8080', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -54,24 +64,45 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve static files from Photos directory (new staff photos location)
 app.use('/Photos', express.static(path.join(__dirname, 'Photos')));
 
-// Serve static files from the frontend build (dist)
-app.use(express.static(path.join(__dirname, '../dist')));
+// API Health Check Route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: '🏥 Gandhi Bai CRM API Server', 
+    status: 'running',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      patients: '/api/patients',
+      staff: '/api/staff',
+      doctors: '/api/doctor',
+      settings: '/api/settings'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
 
-// Fallback to index.html for SPA (must be after API routes)
-// (This will be moved to the end of the file after all routes)
+// API Health endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    message: 'Gandhi Bai CRM API is running',
+    database: 'connected',
+    timestamp: new Date().toISOString()
+  });
+});
 
-// MySQL connection config (replace with your Hostinger DB credentials)
+// MySQL connection config (now using environment variables)
 const db = await mysql.createPool({
-  host:'srv1639.hstgr.io',
-  user: 'u745362362_crmusername',
-  password: 'Aedentek@123#',
-  database: 'u745362362_crm',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 });
 
-console.log(`Connected to MySQL database at ${process.env.DB_Password}`);
+console.log(`Connected to MySQL database at ${process.env.DB_HOST}`);
 
 
 
@@ -103,13 +134,6 @@ console.log('👨‍⚕️ Staff Advance middleware registered at /api');
 console.log('💰 Doctor Salary middleware registered at /api');
 console.log('💼 Staff Salary middleware registered at /api');
 console.log('🏥 Patient Payments middleware registered at /api');
-// Fallback route to serve index.html for SPA routing (must be last)
-// app.use('/api', uploads);
-
-// Fallback to index.html for SPA (must be after all routes)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
-});
 
 
 
