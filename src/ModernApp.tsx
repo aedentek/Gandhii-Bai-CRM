@@ -19,7 +19,9 @@ import PatientHistory from '@/components/patients/PatientHistory';
 import PatientPaymentFees from '@/components/patients/PatientPaymentFees';
 import PatientCallRecord from '@/components/patients/PatientCallRecord';
 import PatientMedicalRecord from '@/components/patients/PatientMedicalRecord';
-import TestReportAmountPage from '@/pages/management/test-report-amount';
+// import TestReportAmountPage from '@/pages/management/test-report-amount';
+import TestReportAmountPage from './pages/management/test-report-amount';
+
 import StaffManagement from '@/components/management/StaffManagement';
 import DeletedStaff from '@/components/management/DeletedStaff';
 import AddStaff from '@/components/management/AddStaff';
