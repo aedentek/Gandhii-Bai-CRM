@@ -74,7 +74,7 @@ Your build works with:
 
 - **Frontend**: `https://crm.gandhibaideaddictioncenter.com` (after upload)
 - **Backend**: `https://gandhii-bai-crm.onrender.com/api` (already live)
-- **Repository**: `https://github.com/aedentek/Gandhii-Bai-CRM-`
+- **Repository**: `https://github.com/aedentek/Gandhi-Bai`
 
 ---
 
