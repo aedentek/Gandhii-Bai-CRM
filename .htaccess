@@ -1,6 +1,11 @@
 RewriteEngine On
 RewriteBase /
 
+# Fix MIME types for JavaScript modules (CRITICAL FIX)
+AddType application/javascript .js
+AddType application/javascript .mjs
+AddType text/css .css
+
 # Handle client-side routing for React SPA
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
