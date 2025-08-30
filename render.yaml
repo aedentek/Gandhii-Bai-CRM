@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     buildCommand: npm install && npm run build:prod && cd server && npm install
-    startCommand: cd server && node index.js
+    startCommand: node server/index.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -16,8 +16,10 @@ services:
         value: Aedentek@123#
       - key: DB_NAME
         value: u745362362_crm
+      - key: PORT
+        value: 10000
       - key: API_PORT
-        value: 4000
+        value: 10000
       - key: PORT
         value: 4000
       - key: ALLOWED_ORIGINS

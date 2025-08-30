@@ -35,7 +35,7 @@ const __dirname = dirname(__filename);
 
 dotenv.config();
 const app = express();
-const PORT = process.env.API_PORT || 4000;
+const PORT = process.env.PORT || process.env.API_PORT || 4000;
 
 // CORS configuration for production
 const corsOptions = {
@@ -67,6 +67,35 @@ app.use('/Photos', express.static(path.join(__dirname, 'Photos')));
 // Serve static frontend files from dist folder
 const frontendPath = path.join(__dirname, '..', 'dist');
 console.log(`📁 Serving frontend from: ${frontendPath}`);
+
+// Check if dist folder exists and log its contents
+import fs from 'fs';
+if (fs.existsSync(frontendPath)) {
+  console.log('✅ Frontend dist folder exists');
+  const files = fs.readdirSync(frontendPath);
+  console.log(`📂 Dist folder contents: ${files.join(', ')}`);
+  
+  // Check for index.html specifically
+  const indexPath = path.join(frontendPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    console.log('✅ index.html found');
+  } else {
+    console.log('❌ index.html NOT found');
+  }
+} else {
+  console.log('❌ Frontend dist folder does NOT exist');
+  console.log(`❌ Expected path: ${frontendPath}`);
+  
+  // Try to find where the build files might be
+  console.log('🔍 Checking current directory contents:');
+  const currentDir = process.cwd();
+  console.log(`📍 Current working directory: ${currentDir}`);
+  if (fs.existsSync(currentDir)) {
+    const currentFiles = fs.readdirSync(currentDir);
+    console.log(`📂 Current directory contents: ${currentFiles.join(', ')}`);
+  }
+}
+
 app.use(express.static(frontendPath));
 
 // API Health Check Route (only for /api/health)
