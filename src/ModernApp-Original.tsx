@@ -19,21 +19,15 @@ import PatientHistory from '@/components/patients/PatientHistory';
 import PatientPaymentFees from '@/components/patients/PatientPaymentFees';
 import PatientCallRecord from '@/components/patients/PatientCallRecord';
 import PatientMedicalRecord from '@/components/patients/PatientMedicalRecord';
+// import TestReportAmountPage from '@/pages/management/test-report-amount';
+import TestReportAmountPage from './pages/management/test-report-amount';
 
-// Test Report Components (commented out if not available)
-// import TestReportAmountPage from '@/components/patients/TestReportAmountPage';
-
-// Staff Management Components
-import AddStaff from '@/components/management/AddStaff';
-import StaffCategory from '@/components/management/StaffCategory';
 import StaffManagement from '@/components/management/StaffManagement';
 import DeletedStaff from '@/components/management/DeletedStaff';
-import AttendanceManagement from '@/components/management/AttendanceManagement';
+import AddStaff from '@/components/management/AddStaff';
+import StaffCategory from '@/components/management/StaffCategory';
 import SalaryPayment from '@/components/management/SalaryPayment';
 import DoctorManagement from '@/components/management/DoctorManagement';
-import SupplierManagement from '@/components/management/SupplierManagement';
-
-// Doctor Management Components
 import AddDoctor from '@/components/management/AddDoctor';
 import DoctorCategory from '@/components/management/DoctorCategory';
 import DoctorAttendance from '@/components/management/DoctorAttendance';
@@ -41,24 +35,18 @@ import DoctorSalary from '@/components/management/DoctorSalary';
 import DoctorAdvance from '@/pages/management/doctor-advance';
 import StaffAdvance from '@/pages/management/staff-advance';
 import DeletedDoctors from '@/components/management/DeletedDoctors';
-
-// Medicine Management Components
 import MedicineManagement from '@/components/management/MedicineManagement';
-import CategoryManagement from '@/components/management/CategoryManagement';
-import MedicineStock from '@/components/management/MedicineStock';
-import MedicineAccounts from '@/components/management/MedicineAccounts';
-
-// Settings Component (commented out if not available)
-// import Settings from '@/components/management/Settings';
-
-// Grocery Management Components
+import SupplierManagement from '@/components/management/SupplierManagement';
 import GroceryManagement from '@/components/management/GroceryManagement';
 import GroceryCategories from '@/components/management/GroceryCategories';
 import GrocerySuppliers from '@/components/management/GrocerySuppliers';
 import GroceryStock from '@/components/management/GroceryStock';
 import GroceryAccounts from '@/components/management/GroceryAccounts';
-
-// General Purchase Management Components
+import AttendanceManagement from '@/components/management/AttendanceManagement';
+import Settings from '@/components/settings/Settings';
+import CategoryManagement from '@/components/management/CategoryManagement';
+import MedicineStock from '@/components/management/MedicineStock';
+import MedicineAccounts from '@/components/management/MedicineAccounts';
 import GeneralManagement from '@/components/management/GeneralManagement';
 import GeneralCategories from '@/components/management/GeneralCategories';
 import GeneralSuppliers from '@/components/management/GeneralSuppliers';
@@ -76,6 +64,7 @@ import RoleManagement from '@/components/management/RoleManagement';
 import Administration from '@/components/Administration/Administration';
 
 import { cn } from '@/lib/utils';
+import { loadWebsiteSettings } from '@/utils/api';
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -85,56 +74,28 @@ function ModernApp() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
-  const [appReady, setAppReady] = useState(false);
 
-  // Enhanced app initialization without hanging on settings
+  // Load website settings (title, favicon) on app start using unified API
   useEffect(() => {
-    const initializeApp = async () => {
+    const loadSettings = async () => {
       try {
-        console.log('🚀 Gandhi Bai CRM - Initializing...');
-        
-        // Set basic title immediately
-        document.title = 'Gandhi Bai De-Addiction Center CRM';
-        
-        // Try to load settings with timeout
-        const settingsPromise = loadWebsiteSettingsWithTimeout();
-        const timeoutPromise = new Promise(resolve => setTimeout(resolve, 3000));
-        
-        await Promise.race([settingsPromise, timeoutPromise]);
-        
-        console.log('✅ App initialization complete');
+        console.log('🔗 Loading website settings via unified API...');
+        await loadWebsiteSettings();
+        console.log('✅ Website settings applied successfully');
       } catch (error) {
-        console.warn('⚠️ Settings load failed, continuing with defaults:', error);
+        console.error('❌ Failed to load website settings:', error);
       } finally {
         setSettingsLoaded(true);
-        setAppReady(true);
       }
     };
 
-    initializeApp();
+    loadSettings();
   }, []);
-
-  // Load website settings with timeout and fallback
-  const loadWebsiteSettingsWithTimeout = async () => {
-    try {
-      // Import the settings API dynamically to avoid blocking
-      const { loadWebsiteSettings } = await import('@/utils/api');
-      await loadWebsiteSettings();
-      console.log('✅ Website settings loaded successfully');
-    } catch (error) {
-      console.warn('⚠️ Failed to load website settings, using defaults:', error);
-    }
-  };
 
   useEffect(() => {
     const savedUser = localStorage.getItem('healthcare_user');
     if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Invalid user data in localStorage:', error);
-        localStorage.removeItem('healthcare_user');
-      }
+      setUser(JSON.parse(savedUser));
     } else {
       // Check if the URL is for forgot password
       if (window.location.pathname === '/forgot-password') {
@@ -156,24 +117,18 @@ function ModernApp() {
     window.location.href = '/';
   };
 
-  // Show loading screen only briefly
-  if (!appReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-6"></div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Gandhi Bai CRM</h2>
-          <p className="text-gray-600">Loading your workspace...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className="App">
-          {showForgotPassword ? (
+          {!settingsLoaded ? (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading...</p>
+              </div>
+            </div>
+          ) : showForgotPassword ? (
             <ForgotPasswordPage onBack={() => {
               setShowForgotPassword(false);
               window.history.pushState(null, '', '/');
@@ -208,7 +163,7 @@ function ModernApp() {
                     <Route path="/patients/add" element={<AddPatient />} />
                     <Route path="/patients/list" element={<PatientList />} />
                     <Route path="/patients/details/:patientId" element={<PatientBiodata />} />
-                    <Route path="/patients/test-report-amount" element={<div className="p-6"><h1 className="text-2xl font-bold">Test Report Amount</h1><p>Test report management coming soon...</p></div>} />
+                    <Route path="/patients/test-report-amount" element={<TestReportAmountPage />} />
                     <Route path="/patients/deleted" element={<DeletedPatients />} />
                     <Route path="/patients/attendance" element={<PatientAttendance />} />
                     <Route path="/patients/medical-records" element={<PatientMedicalRecord />} />
@@ -234,7 +189,7 @@ function ModernApp() {
                     <Route path="/management/doctor-salary" element={<DoctorSalary />} />
                     <Route path="/management/doctor-advance" element={<DoctorAdvance />} />
                     <Route path="/management/staff-advance" element={<StaffAdvance />} />
-                    <Route path="/management/test-report-amount" element={<div className="p-6"><h1 className="text-2xl font-bold">Test Report Amount</h1><p>Test report management coming soon...</p></div>} />
+                    <Route path="/management/test-report-amount" element={<TestReportAmountPage />} />
                     <Route path="/management/deleted-doctors" element={<DeletedDoctors />} />
                     
                     {/* User Role Management Routes */}
@@ -267,7 +222,7 @@ function ModernApp() {
                     <Route path="/leads/list" element={<LeadsList />} />
                     
                     {/* Settings */}
-                    <Route path="/settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p>Settings management coming soon...</p></div>} />
+                    <Route path="/settings" element={<Settings />} />
                     
                     {/* Administration */}
                     <Route path="/administration" element={<Administration />} />
