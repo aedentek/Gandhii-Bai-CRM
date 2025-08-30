@@ -1,10 +1,26 @@
 RewriteEngine On
 RewriteBase /
 
-# Fix MIME types for JavaScript modules (CRITICAL FIX)
-AddType application/javascript .js
-AddType application/javascript .mjs
-AddType text/css .css
+# CRITICAL: Fix MIME types for JavaScript modules (Multiple methods for Hostinger compatibility)
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType application/javascript .mjs
+    AddType text/css .css
+    AddType application/json .json
+</IfModule>
+
+# Alternative MIME type method for shared hosting
+<Files "*.js">
+    ForceType application/javascript
+</Files>
+
+<Files "*.mjs">
+    ForceType application/javascript
+</Files>
+
+<Files "*.css">
+    ForceType text/css
+</Files>
 
 # Handle client-side routing for React SPA
 RewriteCond %{REQUEST_FILENAME} !-f
@@ -12,9 +28,11 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.html [L]
 
 # Security headers
-Header always set X-Frame-Options DENY
-Header always set X-Content-Type-Options nosniff
-Header always set X-XSS-Protection "1; mode=block"
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options DENY
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
 
 # Enable compression
 <IfModule mod_deflate.c>
