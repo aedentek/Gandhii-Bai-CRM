@@ -1,12 +1,15 @@
 // Setup script to create patient attendance table
 import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // MySQL connection config (updated with correct credentials)
 const db = await mysql.createPool({
-  host: 'srv1434.hstgr.io',
-  user: 'u574849695_testcrm',
-  password: 'TestCRM@db24',
-  database: 'u574849695_testcrm',
+  host: process.env.DB_HOST || 'srv1434.hstgr.io',
+  user: process.env.DB_USER || 'u574849695_testcrm',
+  password: process.env.DB_PASSWORD || 'TestCRM@db24',
+  database: process.env.DB_NAME || 'u574849695_testcrm',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0

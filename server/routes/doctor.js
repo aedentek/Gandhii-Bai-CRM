@@ -1,11 +1,23 @@
 import express from 'express';
 import db from '../db/config.js'; // Assuming you have a db.js file for database connection
+import mysql from 'mysql2/promise';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Database configuration for direct connections when needed
+const dbConfig = {
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -237,7 +249,7 @@ router.get('/doctor/salary-history/:doctorId', async (req, res) => {
   let connection;
   try {
     const { doctorId } = req.params;
-    connection = await mysql.createConnection(nfig);
+    connection = await mysql.createConnection(dbConfig);
     
     const [rows] = await connection.execute(
       'SELECT * FROM doctor_salary_history WHERE doctor_id = ? ORDER BY payment_date DESC',

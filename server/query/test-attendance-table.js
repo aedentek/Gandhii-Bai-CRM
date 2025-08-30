@@ -1,11 +1,12 @@
 const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 async function testAttendanceTable() {
   const connection = await mysql.createConnection({
-    host: 'srv1434.hstgr.io',
-    user: 'u574849695_testcrm',
-    password: 'TestCRM@db24',
-    database: 'u574849695_testcrm'
+    host: process.env.DB_HOST || 'srv1434.hstgr.io',
+    user: process.env.DB_USER || 'u574849695_testcrm',
+    password: process.env.DB_PASSWORD || 'TestCRM@db24',
+    database: process.env.DB_NAME || 'u574849695_testcrm'
   });
 
   try {

@@ -1,11 +1,12 @@
 const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 async function createPatientsTable() {
   const connection = await mysql.createConnection({
-    host: 'srv1616.hstgr.io',
-    user: 'u745362362_crm',
-    password: 'CrmPass123@',
-    database: 'u745362362_crm'
+    host: process.env.DB_HOST || 'srv1616.hstgr.io',
+    user: process.env.DB_USER || 'u745362362_crm',
+    password: process.env.DB_PASSWORD || 'CrmPass123@',
+    database: process.env.DB_NAME || 'u745362362_crm'
   });
 
   try {
