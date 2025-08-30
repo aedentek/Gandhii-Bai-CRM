@@ -349,7 +349,7 @@ const SalaryPayment: React.FC = () => {
       const month = selectedMonth;
       const year = selectedYear;
       
-      const response = await fetch('http://localhost:4000/api/staff-salaries/save-monthly-records', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000/api'}/staff-salaries/save-monthly-records`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

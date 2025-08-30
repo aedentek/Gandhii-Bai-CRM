@@ -100,7 +100,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     
     try {
       // Use the new login endpoint that connects to the database
-      const loginResponse = await fetch(`http://localhost:4000/api/login`, {
+      const loginResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000/api'}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
