@@ -74,7 +74,7 @@ VITE_BASE_URL=http://localhost:8080
 
 # Production URLs (uncomment for deployment)
 # VITE_API_URL=https://gandhii-bai-crm.onrender.com/api
-# VITE_BASE_URL=https://crm.gandhibaideaddictioncenter.com
+# VITE_BASE_URL=https://gandhibaideaddictioncenter.com
 ```
 
 ### Database Configuration
@@ -130,7 +130,7 @@ DB_NAME=u745362362_crm
 
 ## 🌐 Live Demo
 
-- **Frontend:** https://crm.gandhibaideaddictioncenter.com
+- **Frontend:** https://gandhibaideaddictioncenter.com
 - **Backend API:** https://gandhii-bai-crm.onrender.com
 
 ## 🏗️ Architecture

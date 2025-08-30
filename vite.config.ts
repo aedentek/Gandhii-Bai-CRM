@@ -29,4 +29,24 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html')
+      },
+      external: (id) => {
+        // Exclude test files from production build
+        return id.includes('test-') || 
+               id.includes('debug-') || 
+               id.includes('upload-test') ||
+               id.includes('quick-test') ||
+               id.includes('direct-api-test') ||
+               id.includes('direct-upload-test') ||
+               id.includes('null-values-test') ||
+               id.includes('photo-upload-fix-test') ||
+               id.includes('test-patient-attendance-crud') ||
+               id.includes('test-photo-url-fix');
+      }
+    }
+  }
 }));

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "npx vite build",
-    "build:dev": "npx vite build --mode development", 
+    "build:dev": "npx vite build --mode development",
+    "build:prod": "npx vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "node render-start.js",
@@ -15,7 +16,9 @@
     "start:dev": "vite preview --port 3000",
     "test": "jest",
     "render-build": "npm install && npm run build",
-    "render-start": "node render-start.js"
+    "render-start": "node render-start.js",
+    "deploy:build": "npm ci && npm run build:prod",
+    "deploy:preview": "npm run build:prod && npm run preview"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
