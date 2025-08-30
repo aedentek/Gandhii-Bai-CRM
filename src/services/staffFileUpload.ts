@@ -137,6 +137,6 @@ export const getStaffFileUrl = (filePath: string): string => {
   }
   
   // Otherwise, construct the full URL using environment variable
-  const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:4000';
+  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000';
   return `${baseUrl}${filePath.startsWith('/') ? '' : '/'}${filePath}`;
 };
