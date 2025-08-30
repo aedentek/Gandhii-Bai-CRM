@@ -64,11 +64,32 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve static files from Photos directory (new staff photos location)
 app.use('/Photos', express.static(path.join(__dirname, 'Photos')));
 
-// Serve static files from the frontend build (dist)
-app.use(express.static(path.join(__dirname, '../dist')));
+// API Health Check Route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: '🏥 Gandhi Bai CRM API Server', 
+    status: 'running',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      patients: '/api/patients',
+      staff: '/api/staff',
+      doctors: '/api/doctor',
+      settings: '/api/settings'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
 
-// Fallback to index.html for SPA (must be after API routes)
-// (This will be moved to the end of the file after all routes)
+// API Health endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    message: 'Gandhi Bai CRM API is running',
+    database: 'connected',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // MySQL connection config (now using environment variables)
 const db = await mysql.createPool({
@@ -113,13 +134,6 @@ console.log('👨‍⚕️ Staff Advance middleware registered at /api');
 console.log('💰 Doctor Salary middleware registered at /api');
 console.log('💼 Staff Salary middleware registered at /api');
 console.log('🏥 Patient Payments middleware registered at /api');
-// Fallback route to serve index.html for SPA routing (must be last)
-// app.use('/api', uploads);
-
-// Fallback to index.html for SPA (must be after all routes)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
-});
 
 
 
