@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Vercel Build Script
-echo "🏗️ Starting Vercel build process..."
+# Production Build Script
+echo "🏗️ Starting production build process..."
 
 # Ensure we have the right Node version
 node --version
@@ -23,4 +23,4 @@ npx vite build
 echo "✅ Build completed. Contents of dist folder:"
 ls -la dist/
 
-echo "🎉 Vercel build completed successfully!"
+echo "🎉 Production build completed successfully!"
