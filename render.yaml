@@ -1,13 +1,23 @@
 services:
   - type: web
-    name: gandhii-bai-crm
+    name: gandhii-bai-crm-backend
     runtime: node
     plan: free
-    buildCommand: npm ci && npm run build
-    startCommand: npm start
+    buildCommand: cd server && npm install
+    startCommand: cd server && node index.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        fromService: true
-    healthCheckPath: /api/test
+      - key: DB_HOST
+        value: srv1639.hstgr.io
+      - key: DB_USER
+        value: u745362362_crmusername
+      - key: DB_PASSWORD
+        value: Aedentek@123#
+      - key: DB_NAME
+        value: u745362362_crm
+      - key: API_PORT
+        value: 4000
+      - key: ALLOWED_ORIGINS
+        value: https://crm.gandhibaideaddictioncenter.com,https://gandhibaideaddictioncenter.com
+    healthCheckPath: /api/health
