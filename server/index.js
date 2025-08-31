@@ -319,6 +319,21 @@ app.get('*', (req, res) => {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
   
+  // Don't serve React app for static assets (JS, CSS, images, etc.)
+  if (req.path.startsWith('/assets/') || 
+      req.path.endsWith('.js') || 
+      req.path.endsWith('.css') || 
+      req.path.endsWith('.ico') || 
+      req.path.endsWith('.svg') || 
+      req.path.endsWith('.png') || 
+      req.path.endsWith('.jpg') || 
+      req.path.endsWith('.txt') ||
+      req.path.startsWith('/uploads/') ||
+      req.path.startsWith('/Photos/')) {
+    // Let express.static handle these files
+    return res.status(404).send('Static file not found');
+  }
+  
   const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
   console.log(`📄 Serving React app from: ${indexPath} for route: ${req.path}`);
   res.sendFile(indexPath, (err) => {
@@ -334,7 +349,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Server running on http://0.0.0.0:${PORT}`);
   console.log(`📝 CRM API endpoints are ready`);
   console.log(`💾 Database connection established`);
-  console.log(`🔧 Effective PORT env value: ${process.env.API_PORT ?? 'not set'}\n`);
+  console.log(`🔧 Effective PORT env value: ${PORT} (PORT: ${process.env.PORT}, API_PORT: ${process.env.API_PORT})\n`);
 });
 
 
