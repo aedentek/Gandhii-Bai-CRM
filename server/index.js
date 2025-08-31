@@ -96,20 +96,32 @@ if (fs.existsSync(frontendPath)) {
   }
 }
 
+// Specific middleware for JavaScript files to ensure proper MIME type
+app.get('*.js', (req, res, next) => {
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  next();
+});
+
+// Specific middleware for CSS files
+app.get('*.css', (req, res, next) => {
+  res.setHeader('Content-Type', 'text/css; charset=utf-8');
+  next();
+});
+
 // Serve static files with proper MIME types and caching
 app.use(express.static(frontendPath, {
   setHeaders: (res, path) => {
     // Set proper MIME types for different file types
     if (path.endsWith('.js') || path.endsWith('.mjs')) {
-      res.setHeader('Content-Type', 'application/javascript');
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
     } else if (path.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
     } else if (path.endsWith('.json')) {
-      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
     } else if (path.endsWith('.svg')) {
       res.setHeader('Content-Type', 'image/svg+xml');
     } else if (path.endsWith('.html')) {
-      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
     }
     
     // Add cache headers for static assets
@@ -120,18 +132,6 @@ app.use(express.static(frontendPath, {
     }
   }
 }));
-
-// Specific middleware for JavaScript files to ensure proper MIME type
-app.get('*.js', (req, res, next) => {
-  res.setHeader('Content-Type', 'application/javascript');
-  next();
-});
-
-// Specific middleware for CSS files
-app.get('*.css', (req, res, next) => {
-  res.setHeader('Content-Type', 'text/css');
-  next();
-});
 
 // API Health Check Route (only for /api/health)
 app.get('/api/health', (req, res) => {

@@ -38,19 +38,23 @@ export default defineConfig(({ mode }) => {
           main: path.resolve(__dirname, 'index.html')
         },
         external: (id) => {
-          // Exclude test files from production build
-          return id.includes('test-') || 
-                 id.includes('debug-') || 
-                 id.includes('upload-test') ||
-                 id.includes('quick-test') ||
-                 id.includes('direct-api-test') ||
-                 id.includes('direct-upload-test') ||
-                 id.includes('null-values-test') ||
-                 id.includes('photo-upload-fix-test') ||
-                 id.includes('test-patient-attendance-crud') ||
-                 id.includes('test-photo-url-fix');
+          // Only exclude actual test files, not icons or legitimate modules
+          return id.includes('/test-') || 
+                 id.includes('/debug-') || 
+                 id.includes('upload-test.') ||
+                 id.includes('quick-test.') ||
+                 id.includes('direct-api-test.') ||
+                 id.includes('direct-upload-test.') ||
+                 id.includes('null-values-test.') ||
+                 id.includes('photo-upload-fix-test.') ||
+                 id.includes('test-patient-attendance-crud.') ||
+                 id.includes('test-photo-url-fix.');
         }
-      }
+      },
+      // Ensure all dependencies are bundled properly
+      minify: 'esbuild',
+      target: 'es2015',
+      chunkSizeWarningLimit: 1000
     }
   };
 });
