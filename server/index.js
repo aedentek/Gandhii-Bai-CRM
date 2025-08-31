@@ -64,81 +64,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve static files from Photos directory (new staff photos location)
 app.use('/Photos', express.static(path.join(__dirname, 'Photos')));
 
-// Serve static frontend files from dist folder with proper MIME types
-const frontendPath = path.join(__dirname, '..', 'dist');
-console.log(`📁 Serving frontend from: ${frontendPath}`);
-
-// Check if dist folder exists and log its contents
-import fs from 'fs';
-if (fs.existsSync(frontendPath)) {
-  console.log('✅ Frontend dist folder exists');
-  const files = fs.readdirSync(frontendPath);
-  console.log(`📂 Dist folder contents: ${files.join(', ')}`);
-  
-  // Check for index.html specifically
-  const indexPath = path.join(frontendPath, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    console.log('✅ index.html found');
-  } else {
-    console.log('❌ index.html NOT found');
-  }
-} else {
-  console.log('❌ Frontend dist folder does NOT exist');
-  console.log(`❌ Expected path: ${frontendPath}`);
-  
-  // Try to find where the build files might be
-  console.log('🔍 Checking current directory contents:');
-  const currentDir = process.cwd();
-  console.log(`📍 Current working directory: ${currentDir}`);
-  if (fs.existsSync(currentDir)) {
-    const currentFiles = fs.readdirSync(currentDir);
-    console.log(`📂 Current directory contents: ${currentFiles.join(', ')}`);
-  }
-}
-
-// Specific middleware for JavaScript files to ensure proper MIME type
-app.get('*.js', (req, res, next) => {
-  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  next();
-});
-
-// Specific middleware for CSS files
-app.get('*.css', (req, res, next) => {
-  res.setHeader('Content-Type', 'text/css; charset=utf-8');
-  next();
-});
-
-// Serve static files with proper MIME types and caching
-app.use(express.static(frontendPath, {
-  setHeaders: (res, path) => {
-    // Set proper MIME types for different file types
-    if (path.endsWith('.js') || path.endsWith('.mjs')) {
-      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    } else if (path.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css; charset=utf-8');
-    } else if (path.endsWith('.json')) {
-      res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    } else if (path.endsWith('.svg')) {
-      res.setHeader('Content-Type', 'image/svg+xml');
-    } else if (path.endsWith('.html')) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    }
-    
-    // Add cache headers for static assets
-    if (path.includes('/assets/')) {
-      res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year
-    } else {
-      res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour
-    }
-  }
-}));
-
-// API Health Check Route (only for /api/health)
+// API Health Check Route - Backend API Only
 app.get('/api/health', (req, res) => {
   res.json({ 
     message: '🏥 Gandhi Bai CRM API Server', 
     status: 'running',
     version: '1.0.0',
+    type: 'backend-api-only',
     endpoints: {
       health: '/api/health',
       patients: '/api/patients',
@@ -312,34 +244,25 @@ await createTableIfNotExists('patient_payment_history', `
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `, 'Patient payment history');
 
-// Catch-all handler: send back React's index.html file for any non-API routes
+// API-only backend - no frontend serving
 app.get('*', (req, res) => {
-  // Don't serve React app for API routes
+  // Handle unknown API routes
   if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
+    return res.status(404).json({ 
+      error: 'API endpoint not found',
+      message: `The API endpoint ${req.path} does not exist`,
+      availableEndpoints: ['/api/health', '/api/patients', '/api/staff', '/api/doctor']
+    });
   }
   
-  // Don't serve React app for static assets (JS, CSS, images, etc.)
-  if (req.path.startsWith('/assets/') || 
-      req.path.endsWith('.js') || 
-      req.path.endsWith('.css') || 
-      req.path.endsWith('.ico') || 
-      req.path.endsWith('.svg') || 
-      req.path.endsWith('.png') || 
-      req.path.endsWith('.jpg') || 
-      req.path.endsWith('.txt') ||
-      req.path.startsWith('/uploads/') ||
-      req.path.startsWith('/Photos/')) {
-    // Let express.static handle these files
-    return res.status(404).send('Static file not found');
-  }
-  
-  const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
-  console.log(`📄 Serving React app from: ${indexPath} for route: ${req.path}`);
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error('❌ Error serving React app:', err);
-      res.status(500).send('Error loading application');
+  // For non-API routes, return API info
+  res.status(200).json({
+    message: '🏥 Gandhi Bai CRM API Server',
+    status: 'This is a backend API server only',
+    frontend: 'Please visit https://crm.gandhibaideaddictioncenter.com for the frontend',
+    api: {
+      health: '/api/health',
+      documentation: 'API endpoints available under /api/*'
     }
   });
 });
