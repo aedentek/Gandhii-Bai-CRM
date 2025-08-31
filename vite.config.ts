@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = process.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000';
   
   return {
+    base: './', // Use relative paths for better compatibility
     server: {
       host: "::",
       port: 8080,
