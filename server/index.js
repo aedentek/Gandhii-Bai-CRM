@@ -64,7 +64,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve static files from Photos directory (new staff photos location)
 app.use('/Photos', express.static(path.join(__dirname, 'Photos')));
 
-// Serve static frontend files from dist folder
+// Serve static frontend files from dist folder with proper MIME types
 const frontendPath = path.join(__dirname, '..', 'dist');
 console.log(`📁 Serving frontend from: ${frontendPath}`);
 
@@ -96,7 +96,42 @@ if (fs.existsSync(frontendPath)) {
   }
 }
 
-app.use(express.static(frontendPath));
+// Serve static files with proper MIME types and caching
+app.use(express.static(frontendPath, {
+  setHeaders: (res, path) => {
+    // Set proper MIME types for different file types
+    if (path.endsWith('.js') || path.endsWith('.mjs')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.json')) {
+      res.setHeader('Content-Type', 'application/json');
+    } else if (path.endsWith('.svg')) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html');
+    }
+    
+    // Add cache headers for static assets
+    if (path.includes('/assets/')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour
+    }
+  }
+}));
+
+// Specific middleware for JavaScript files to ensure proper MIME type
+app.get('*.js', (req, res, next) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  next();
+});
+
+// Specific middleware for CSS files
+app.get('*.css', (req, res, next) => {
+  res.setHeader('Content-Type', 'text/css');
+  next();
+});
 
 // API Health Check Route (only for /api/health)
 app.get('/api/health', (req, res) => {
