@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { copyFileSync } from "fs";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -118,7 +119,21 @@ RewriteRule . /index.html [L]
                  id.includes('test-patient-attendance-crud') ||
                  id.includes('test-photo-url-fix');
         }
-      }
+      },
+      // Custom plugin to copy .htaccess after build
+      plugins: [
+        {
+          name: 'copy-htaccess',
+          writeBundle() {
+            try {
+              copyFileSync('.htaccess', 'dist/.htaccess');
+              console.log('✅ .htaccess copied to dist folder');
+            } catch (error) {
+              console.log('⚠️ Could not copy .htaccess:', error instanceof Error ? error.message : 'Unknown error');
+            }
+          }
+        }
+      ]
     }
   };
 });
