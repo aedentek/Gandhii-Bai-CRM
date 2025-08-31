@@ -64,46 +64,47 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve static files from Photos directory (new staff photos location)
 app.use('/Photos', express.static(path.join(__dirname, 'Photos')));
 
-// API Health Check Route - Backend API Only
+// API Health Check Route - Optimized
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    message: '🏥 Gandhi Bai CRM API Server', 
-    status: 'running',
-    version: '1.0.0',
-    type: 'backend-api-only',
-    endpoints: {
-      health: '/api/health',
-      patients: '/api/patients',
-      staff: '/api/staff',
-      doctors: '/api/doctor',
-      settings: '/api/settings'
-    },
-    timestamp: new Date().toISOString()
-  });
-});
-
-// API Health endpoint
-app.get('/api/health', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
   res.json({ 
     status: 'healthy', 
-    message: 'Gandhi Bai CRM API is running',
-    database: 'connected',
+    message: 'Gandhi Bai CRM API - Fast Response',
+    version: '1.0.1',
+    uptime: process.uptime(),
     timestamp: new Date().toISOString()
   });
 });
 
-// MySQL connection config (now using environment variables)
+// Optimized MySQL connection pool
 const db = await mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  connectionLimit: 20, // Increased for better performance
+  queueLimit: 0,
+  acquireTimeout: 60000,
+  timeout: 60000,
+  reconnect: true,
+  charset: 'utf8mb4'
 });
 
-console.log(`Connected to MySQL database at ${process.env.DB_HOST}`);
+console.log(`⚡ Optimized MySQL pool connected to ${process.env.DB_HOST}`);
+
+// Performance middleware
+app.use((req, res, next) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block'
+  });
+  next();
+});
 
 
 
